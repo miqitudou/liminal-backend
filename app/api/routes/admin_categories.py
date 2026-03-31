@@ -3,8 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_admin
-from app.db.session import get_db
 from app.core.exceptions import AppException
+from app.core.id_utils import normalize_int_id
+from app.db.session import get_db
 from app.models import Category
 from app.schemas.admin import CategoryItem, CategoryListData, CategoryPayload
 from app.schemas.common import ApiResponse
@@ -12,6 +13,21 @@ from app.services.catalog_service import delete_category, list_categories, save_
 
 
 router = APIRouter(prefix="/admin/categories", tags=["admin-categories"])
+
+
+def serialize_category(category: Category) -> CategoryItem:
+    return CategoryItem(
+        category_id=str(category.id),
+        category_name=category.category_name,
+        category_desc=category.category_desc,
+        badge_text=category.badge_text,
+        delivery_mode=category.delivery_mode,
+        sort=category.sort,
+        status=category.status,
+        goods_count=len(category.goods),
+        created_at=category.created_at,
+        updated_at=category.updated_at,
+    )
 
 
 @router.get("", response_model=ApiResponse[CategoryListData])
@@ -32,25 +48,9 @@ def get_categories(
         page=page,
         page_size=page_size,
     )
-
-    result = []
-    for item in items:
-        result.append(
-            CategoryItem(
-                category_id=item.id,
-                category_name=item.category_name,
-                category_desc=item.category_desc,
-                badge_text=item.badge_text,
-                delivery_mode=item.delivery_mode,
-                sort=item.sort,
-                status=item.status,
-                goods_count=len(item.goods),
-                created_at=item.created_at,
-                updated_at=item.updated_at,
-            )
-        )
-
-    return ApiResponse.success(data={"list": result, "pagination": pagination})
+    return ApiResponse.success(
+        data={"list": [serialize_category(item) for item in items], "pagination": pagination}
+    )
 
 
 @router.post("", response_model=ApiResponse[CategoryItem])
@@ -62,20 +62,7 @@ def create_category(
     category = save_category(db, payload)
     db.commit()
     db.refresh(category)
-    return ApiResponse.success(
-        data=CategoryItem(
-            category_id=category.id,
-            category_name=category.category_name,
-            category_desc=category.category_desc,
-            badge_text=category.badge_text,
-            delivery_mode=category.delivery_mode,
-            sort=category.sort,
-            status=category.status,
-            goods_count=0,
-            created_at=category.created_at,
-            updated_at=category.updated_at,
-        )
-    )
+    return ApiResponse.success(data=serialize_category(category))
 
 
 @router.put("/{category_id}", response_model=ApiResponse[CategoryItem])
@@ -85,26 +72,13 @@ def update_category(
     db: Session = Depends(get_db),
     _admin=Depends(get_current_admin),
 ) -> ApiResponse[CategoryItem]:
-    category = db.get(Category, category_id)
+    category = db.get(Category, normalize_int_id(category_id, "分类ID"))
     if not category:
         raise AppException(code=40402, message="分类不存在")
     category = save_category(db, payload, existing=category)
     db.commit()
     db.refresh(category)
-    return ApiResponse.success(
-        data=CategoryItem(
-            category_id=category.id,
-            category_name=category.category_name,
-            category_desc=category.category_desc,
-            badge_text=category.badge_text,
-            delivery_mode=category.delivery_mode,
-            sort=category.sort,
-            status=category.status,
-            goods_count=len(category.goods),
-            created_at=category.created_at,
-            updated_at=category.updated_at,
-        )
-    )
+    return ApiResponse.success(data=serialize_category(category))
 
 
 @router.delete("/{category_id}", response_model=ApiResponse[dict])
@@ -116,7 +90,7 @@ def remove_category(
     category = db.scalar(
         select(Category)
         .options(selectinload(Category.goods))
-        .where(Category.id == category_id)
+        .where(Category.id == normalize_int_id(category_id, "分类ID"))
     )
     if not category:
         raise AppException(code=40402, message="分类不存在")

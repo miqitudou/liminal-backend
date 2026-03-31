@@ -21,8 +21,8 @@ router = APIRouter(prefix="/admin/goods", tags=["admin-goods"])
 
 def serialize_goods_detail(goods: Goods) -> GoodsItem:
     return GoodsItem(
-        goods_id=goods.id,
-        category_id=goods.category_id,
+        goods_id=str(goods.id),
+        category_id=str(goods.category_id),
         category_name=goods.category.category_name,
         goods_name=goods.goods_name,
         goods_desc=goods.goods_desc,
@@ -38,7 +38,7 @@ def serialize_goods_detail(goods: Goods) -> GoodsItem:
         detail_tips=goods.detail_tips or [],
         specs=[
             GoodsSpecItem(
-                spec_id=spec.id,
+                spec_id=str(spec.id),
                 spec_name=spec.spec_name,
                 price_cents=spec.price_cents,
                 stock=spec.stock,
@@ -47,6 +47,7 @@ def serialize_goods_detail(goods: Goods) -> GoodsItem:
                 status=spec.status,
             )
             for spec in goods.specs
+            if spec.status == "enabled"
         ],
         booking_rule=GoodsBookingRuleItem(
             min_advance_hours=goods.booking_rule.min_advance_hours
@@ -82,8 +83,8 @@ def get_goods_list(
 
     result = [
         GoodsListItem(
-            goods_id=item.id,
-            category_id=item.category_id,
+            goods_id=str(item.id),
+            category_id=str(item.category_id),
             category_name=item.category.category_name,
             goods_name=item.goods_name,
             cover_image=item.cover_image,
@@ -91,7 +92,7 @@ def get_goods_list(
             sales_count=item.sales_count,
             status=item.status,
             is_recommend=item.is_recommend,
-            spec_count=len(item.specs),
+            spec_count=len([spec for spec in item.specs if spec.status == "enabled"]),
             updated_at=item.updated_at,
         )
         for item in items
@@ -127,6 +128,6 @@ def update_goods(
     _admin=Depends(get_current_admin),
 ) -> ApiResponse[GoodsItem]:
     goods = get_goods_or_404(db, goods_id)
-    save_goods(db, payload, existing=goods)
+    goods = save_goods(db, payload, existing=goods)
     db.commit()
-    return ApiResponse.success(data=serialize_goods_detail(get_goods_or_404(db, goods_id)))
+    return ApiResponse.success(data=serialize_goods_detail(get_goods_or_404(db, goods.id)))

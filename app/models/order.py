@@ -9,11 +9,19 @@ from app.db.base import Base
 class Order(Base):
     __tablename__ = "orders"
 
-    order_no: Mapped[str] = mapped_column(String(64), primary_key=True)
-    user_id: Mapped[str] = mapped_column(
-        String(64),
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    order_no: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer,
         ForeignKey("users.id"),
         nullable=False,
+        index=True,
+    )
+    store_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("store_configs.id"),
+        nullable=False,
+        index=True,
     )
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     payment_status: Mapped[str] = mapped_column(
@@ -44,6 +52,7 @@ class Order(Base):
     )
 
     user = relationship("User", back_populates="orders")
+    store = relationship("StoreConfig", back_populates="orders")
     items = relationship(
         "OrderItem",
         back_populates="order",
@@ -55,17 +64,28 @@ class OrderItem(Base):
     __tablename__ = "order_items"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    order_no: Mapped[str] = mapped_column(
-        String(64),
-        ForeignKey("orders.order_no"),
+    order_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("orders.id"),
         nullable=False,
+        index=True,
     )
-    goods_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    goods_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("goods.id"),
+        nullable=False,
+        index=True,
+    )
     goods_name: Mapped[str] = mapped_column(String(128), nullable=False)
     cover_text: Mapped[str] = mapped_column(String(128), default="", nullable=False)
     cover_color: Mapped[str] = mapped_column(String(32), default="#f3e1cf", nullable=False)
     cover_image: Mapped[str] = mapped_column(String(500), default="", nullable=False)
-    spec_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    spec_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("goods_specs.id"),
+        nullable=False,
+        index=True,
+    )
     spec_name: Mapped[str] = mapped_column(String(128), nullable=False)
     price_cents: Mapped[int] = mapped_column(Integer, nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -73,3 +93,5 @@ class OrderItem(Base):
     pickup_slot: Mapped[str] = mapped_column(String(64), nullable=False)
 
     order = relationship("Order", back_populates="items")
+    goods = relationship("Goods")
+    spec = relationship("GoodsSpec")

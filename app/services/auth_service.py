@@ -6,7 +6,7 @@ from app.core.exceptions import AppException
 from app.core.security import create_access_token, verify_password
 from app.models import AdminUser, User
 from app.services.mappers import serialize_user_for_miniapp
-from app.services.seed import generate_id, generate_member_since
+from app.services.seed import generate_member_since
 
 
 def admin_login(db: Session, username: str, password: str) -> dict:
@@ -19,7 +19,7 @@ def admin_login(db: Session, username: str, password: str) -> dict:
         "access_token": token,
         "token_type": "bearer",
         "admin_info": {
-            "id": admin.id,
+            "id": str(admin.id),
             "username": admin.username,
             "display_name": admin.display_name,
         },
@@ -40,7 +40,6 @@ def simple_user_login(
     if not user:
         is_new_user = True
         user = User(
-            id=generate_id("user"),
             nickname=nickname or f"微信用户{resolved_mobile[-4:]}",
             avatar_url=avatar_url or "",
             mobile=resolved_mobile,

@@ -9,7 +9,7 @@ from app.db.base import Base
 class Banner(Base):
     __tablename__ = "banners"
 
-    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(128), nullable=False)
     subtitle: Mapped[str] = mapped_column(String(255), default="", nullable=False)
     image_url: Mapped[str] = mapped_column(String(500), default="", nullable=False)

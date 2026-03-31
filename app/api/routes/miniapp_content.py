@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.id_utils import normalize_int_id
 from app.db.session import get_db
 from app.models import Banner, Category, Goods, StoreConfig
 from app.schemas.common import ApiResponse
@@ -37,7 +38,7 @@ def get_home_index(
     banners = db.scalars(
         select(Banner).where(Banner.status == "enabled").order_by(Banner.sort.asc())
     ).all()
-    store = db.scalar(select(StoreConfig).limit(1))
+    store = db.scalar(select(StoreConfig).order_by(StoreConfig.id.asc()).limit(1))
 
     return ApiResponse.success(
         data={
@@ -79,7 +80,7 @@ def get_goods_list(
         .order_by(Goods.sort.asc())
     )
     if categoryId:
-        stmt = stmt.where(Goods.category_id == categoryId)
+        stmt = stmt.where(Goods.category_id == normalize_int_id(categoryId, "分类ID"))
     if keyword:
         stmt = stmt.where(Goods.goods_name.like(f"%{keyword}%"))
     goods = db.scalars(stmt).unique().all()
@@ -93,7 +94,7 @@ def get_goods_detail(goods_id: str, db: Session = Depends(get_db)) -> ApiRespons
     goods = db.scalar(
         select(Goods)
         .options(joinedload(Goods.specs), joinedload(Goods.booking_rule))
-        .where(Goods.id == goods_id, Goods.status == "on")
+        .where(Goods.id == normalize_int_id(goods_id, "商品ID"), Goods.status == "on")
     )
     if not goods:
         return ApiResponse(code=40401, message="商品不存在", data=None)

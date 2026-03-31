@@ -2,17 +2,16 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.constants import (
-    DEFAULT_STORE_ID,
     ORDER_STATUS_CANCELLED,
     ORDER_STATUS_PAID,
     ORDER_STATUS_PENDING_PAYMENT,
-    ORDER_STATUS_TEXT_MAP,
 )
 from app.core.exceptions import AppException
+from app.core.id_utils import normalize_int_id
 from app.models import Goods, Order, OrderItem, StoreConfig, User
 from app.schemas.miniapp import MiniappCreateOrderRequest
 from app.services.mappers import build_pagination
@@ -85,13 +84,14 @@ def create_order_from_miniapp(
     if not payload.items:
         raise AppException(code=40001, message="订单商品不能为空")
 
-    store = db.get(StoreConfig, DEFAULT_STORE_ID)
+    store = db.scalar(select(StoreConfig).order_by(StoreConfig.id.asc()).limit(1))
     if not store:
         raise AppException(code=50001, message="门店配置不存在")
 
     order = Order(
         order_no=build_order_no(),
         user_id=user.id,
+        store_id=store.id,
         status=payload.status or ORDER_STATUS_PENDING_PAYMENT,
         payment_status="pending",
         amount_cents=0,
@@ -109,23 +109,25 @@ def create_order_from_miniapp(
 
     total_cents = 0
     for item in payload.items:
+        goods_id = normalize_int_id(item.goodsId, "商品ID")
+        spec_id = normalize_int_id(item.specId, "规格ID")
         goods = db.scalar(
             select(Goods)
             .options(joinedload(Goods.specs))
-            .where(Goods.id == item.goodsId)
+            .where(Goods.id == goods_id)
         )
         if not goods:
             raise AppException(code=40401, message="商品不存在")
 
-        spec = next((spec for spec in goods.specs if spec.id == item.specId), None)
+        spec = next((spec for spec in goods.specs if spec.id == spec_id), None)
         if not spec:
-            raise AppException(code=40401, message="商品规格不存在")
+            raise AppException(code=40403, message="商品规格不存在")
 
         line_amount = spec.price_cents * item.quantity
         total_cents += line_amount
         db.add(
             OrderItem(
-                order_no=order.order_no,
+                order_id=order.id,
                 goods_id=goods.id,
                 goods_name=goods.goods_name,
                 cover_text=goods.cover_text,
@@ -149,13 +151,14 @@ def create_order_from_miniapp(
 def list_user_orders(
     db: Session,
     *,
-    user_id: str,
+    user_id: str | int,
     status: str = "",
 ) -> list[Order]:
+    normalized_user_id = normalize_int_id(user_id, "用户ID")
     stmt = (
         select(Order)
         .options(joinedload(Order.items))
-        .where(Order.user_id == user_id)
+        .where(Order.user_id == normalized_user_id)
         .order_by(Order.created_at.desc())
     )
     if status and status != "all":
@@ -163,7 +166,7 @@ def list_user_orders(
     return db.scalars(stmt).unique().all()
 
 
-def get_user_order_counts(db: Session, user_id: str) -> dict:
+def get_user_order_counts(db: Session, user_id: str | int) -> dict:
     orders = list_user_orders(db, user_id=user_id)
     result = {
         "all": len(orders),

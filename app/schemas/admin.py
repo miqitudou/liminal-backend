@@ -30,7 +30,7 @@ class PaginationMeta(BaseModel):
 
 
 class CategoryPayload(BaseModel):
-    category_id: str | None = None
+    category_id: str | int | None = None
     category_name: str
     category_desc: str = ""
     badge_text: str = ""
@@ -58,7 +58,7 @@ class CategoryListData(BaseModel):
 
 
 class GoodsSpecPayload(BaseModel):
-    spec_id: str | None = None
+    spec_id: str | int | None = None
     spec_name: str
     price_cents: int
     stock: int
@@ -73,8 +73,8 @@ class GoodsBookingRulePayload(BaseModel):
 
 
 class GoodsPayload(BaseModel):
-    goods_id: str | None = None
-    category_id: str
+    goods_id: str | int | None = None
+    category_id: str | int
     goods_name: str
     goods_desc: str = ""
     cover_text: str = ""
@@ -150,12 +150,12 @@ class GoodsListData(BaseModel):
 
 
 class BannerPayload(BaseModel):
-    banner_id: str | None = None
+    banner_id: str | int | None = None
     title: str
     subtitle: str = ""
     image_url: str = ""
     action_type: str = "none"
-    action_value: str = ""
+    action_value: str | int = ""
     action_text: str = ""
     sort: int = 0
     status: str = "enabled"

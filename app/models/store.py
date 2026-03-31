@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import DateTime, Integer, String, Text, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -9,7 +9,7 @@ from app.db.base import Base
 class StoreConfig(Base):
     __tablename__ = "store_configs"
 
-    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     store_name: Mapped[str] = mapped_column(String(128), nullable=False)
     short_name: Mapped[str] = mapped_column(String(64), nullable=False)
     phone: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -27,3 +27,5 @@ class StoreConfig(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+    orders = relationship("Order", back_populates="store")

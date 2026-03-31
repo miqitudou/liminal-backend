@@ -9,7 +9,7 @@ from app.db.base import Base
 class Category(Base):
     __tablename__ = "categories"
 
-    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     category_name: Mapped[str] = mapped_column(String(64), nullable=False)
     category_desc: Mapped[str] = mapped_column(String(255), default="", nullable=False)
     badge_text: Mapped[str] = mapped_column(String(64), default="", nullable=False)

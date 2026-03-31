@@ -4,10 +4,10 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.exceptions import AppException
+from app.core.id_utils import normalize_int_id
 from app.models import Banner, Category, Goods, GoodsBookingRule, GoodsSpec
 from app.schemas.admin import BannerPayload, CategoryPayload, GoodsPayload
 from app.services.mappers import build_pagination
-from app.services.seed import generate_id
 
 
 def list_categories(
@@ -52,7 +52,7 @@ def save_category(
     *,
     existing: Category | None = None,
 ) -> Category:
-    category = existing or Category(id=payload.category_id or generate_id("cat"))
+    category = existing or Category()
     category.category_name = payload.category_name
     category.category_desc = payload.category_desc
     category.badge_text = payload.badge_text
@@ -90,7 +90,7 @@ def list_goods(
             )
         )
     if category_id:
-        stmt = stmt.where(Goods.category_id == category_id)
+        stmt = stmt.where(Goods.category_id == normalize_int_id(category_id, "分类ID"))
     if status:
         stmt = stmt.where(Goods.status == status)
     if is_recommend is not None:
@@ -109,7 +109,8 @@ def list_goods(
     return items, build_pagination(page, page_size, total)
 
 
-def get_goods_or_404(db: Session, goods_id: str) -> Goods:
+def get_goods_or_404(db: Session, goods_id: str | int) -> Goods:
+    normalized_goods_id = normalize_int_id(goods_id, "商品ID")
     goods = db.scalar(
         select(Goods)
         .options(
@@ -117,7 +118,7 @@ def get_goods_or_404(db: Session, goods_id: str) -> Goods:
             joinedload(Goods.specs),
             joinedload(Goods.booking_rule),
         )
-        .where(Goods.id == goods_id)
+        .where(Goods.id == normalized_goods_id)
     )
     if not goods:
         raise AppException(code=40401, message="商品不存在")
@@ -130,12 +131,13 @@ def save_goods(
     *,
     existing: Goods | None = None,
 ) -> Goods:
-    category = db.get(Category, payload.category_id)
+    category_id = normalize_int_id(payload.category_id, "分类ID")
+    category = db.get(Category, category_id)
     if not category:
         raise AppException(code=40402, message="分类不存在")
 
-    goods = existing or Goods(id=payload.goods_id or generate_id("goods"))
-    goods.category_id = payload.category_id
+    goods = existing or Goods()
+    goods.category_id = category_id
     goods.goods_name = payload.goods_name
     goods.goods_desc = payload.goods_desc
     goods.cover_text = payload.cover_text
@@ -151,33 +153,37 @@ def save_goods(
     db.add(goods)
     db.flush()
 
-    for spec in list(goods.specs):
-        db.delete(spec)
-    if goods.booking_rule:
-        db.delete(goods.booking_rule)
-    db.flush()
+    existing_specs = {str(spec.id): spec for spec in goods.specs}
+    retained_spec_ids: set[int] = set()
 
     for item in payload.specs:
-        db.add(
-            GoodsSpec(
-                id=item.spec_id or generate_id("spec"),
-                goods_id=goods.id,
-                spec_name=item.spec_name,
-                price_cents=item.price_cents,
-                stock=item.stock,
-                min_advance_hours=item.min_advance_hours,
-                sort=item.sort,
-                status=item.status,
-            )
-        )
+        spec: GoodsSpec | None = None
+        if item.spec_id:
+            spec = existing_specs.get(str(item.spec_id))
+        if not spec:
+            spec = GoodsSpec(goods_id=goods.id)
 
-    db.add(
-        GoodsBookingRule(
-            goods_id=goods.id,
-            min_advance_hours=payload.booking_rule.min_advance_hours,
-            pickup_slots=payload.booking_rule.pickup_slots,
-        )
-    )
+        spec.goods_id = goods.id
+        spec.spec_name = item.spec_name
+        spec.price_cents = item.price_cents
+        spec.stock = item.stock
+        spec.min_advance_hours = item.min_advance_hours
+        spec.sort = item.sort
+        spec.status = item.status
+        db.add(spec)
+        db.flush()
+        retained_spec_ids.add(spec.id)
+
+    for spec in goods.specs:
+        if spec.id not in retained_spec_ids:
+            spec.status = "disabled"
+            db.add(spec)
+
+    booking_rule = goods.booking_rule or GoodsBookingRule(goods_id=goods.id)
+    booking_rule.goods_id = goods.id
+    booking_rule.min_advance_hours = payload.booking_rule.min_advance_hours
+    booking_rule.pickup_slots = payload.booking_rule.pickup_slots
+    db.add(booking_rule)
     db.flush()
     return get_goods_or_404(db, goods.id)
 
@@ -215,12 +221,12 @@ def save_banner(
     *,
     existing: Banner | None = None,
 ) -> Banner:
-    banner = existing or Banner(id=payload.banner_id or generate_id("banner"))
+    banner = existing or Banner()
     banner.title = payload.title
     banner.subtitle = payload.subtitle
     banner.image_url = payload.image_url
     banner.action_type = payload.action_type
-    banner.action_value = payload.action_value
+    banner.action_value = str(payload.action_value or "")
     banner.action_text = payload.action_text
     banner.sort = payload.sort
     banner.status = payload.status

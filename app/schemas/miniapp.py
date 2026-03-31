@@ -11,8 +11,8 @@ class MiniappSimpleLoginRequest(BaseModel):
 
 
 class MiniappOrderItemInput(BaseModel):
-    goodsId: str
-    specId: str
+    goodsId: str | int
+    specId: str | int
     quantity: int
     bookingDate: str
     pickupSlot: str

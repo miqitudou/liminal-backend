@@ -9,11 +9,12 @@ from app.db.base import Base
 class Goods(Base):
     __tablename__ = "goods"
 
-    id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    category_id: Mapped[str] = mapped_column(
-        String(64),
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    category_id: Mapped[int] = mapped_column(
+        Integer,
         ForeignKey("categories.id"),
         nullable=False,
+        index=True,
     )
     goods_name: Mapped[str] = mapped_column(String(128), nullable=False)
     goods_desc: Mapped[str] = mapped_column(Text, default="", nullable=False)
@@ -57,11 +58,12 @@ class Goods(Base):
 class GoodsSpec(Base):
     __tablename__ = "goods_specs"
 
-    id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    goods_id: Mapped[str] = mapped_column(
-        String(64),
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    goods_id: Mapped[int] = mapped_column(
+        Integer,
         ForeignKey("goods.id"),
         nullable=False,
+        index=True,
     )
     spec_name: Mapped[str] = mapped_column(String(128), nullable=False)
     price_cents: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -76,10 +78,13 @@ class GoodsSpec(Base):
 class GoodsBookingRule(Base):
     __tablename__ = "goods_booking_rules"
 
-    goods_id: Mapped[str] = mapped_column(
-        String(64),
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    goods_id: Mapped[int] = mapped_column(
+        Integer,
         ForeignKey("goods.id"),
-        primary_key=True,
+        nullable=False,
+        unique=True,
+        index=True,
     )
     min_advance_hours: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     pickup_slots: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)

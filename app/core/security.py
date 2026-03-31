@@ -20,7 +20,7 @@ def hash_password(password: str) -> str:
 
 def create_access_token(
     *,
-    subject: str,
+    subject: str | int,
     token_type: str,
     extra: dict[str, Any] | None = None,
     expires_minutes: int | None = None,
@@ -29,7 +29,7 @@ def create_access_token(
         minutes=expires_minutes or settings.jwt_access_token_expires_minutes
     )
     payload: dict[str, Any] = {
-        "sub": subject,
+        "sub": str(subject),
         "token_type": token_type,
         "exp": expire_at,
     }

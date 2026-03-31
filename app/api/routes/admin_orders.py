@@ -3,7 +3,13 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_admin
 from app.db.session import get_db
-from app.schemas.admin import OrderData, OrderItemData, OrderListData, OrderListItem, OrderStatusUpdateRequest
+from app.schemas.admin import (
+    OrderData,
+    OrderItemData,
+    OrderListData,
+    OrderListItem,
+    OrderStatusUpdateRequest,
+)
 from app.schemas.common import ApiResponse
 from app.services.order_service import get_order_or_404, list_admin_orders, update_order_status
 
@@ -29,12 +35,12 @@ def serialize_order_detail(order) -> OrderData:
         paid_at=order.paid_at,
         items=[
             OrderItemData(
-                goods_id=item.goods_id,
+                goods_id=str(item.goods_id),
                 goods_name=item.goods_name,
                 cover_text=item.cover_text,
                 cover_color=item.cover_color,
                 cover_image=item.cover_image,
-                spec_id=item.spec_id,
+                spec_id=str(item.spec_id),
                 spec_name=item.spec_name,
                 price_cents=item.price_cents,
                 quantity=item.quantity,

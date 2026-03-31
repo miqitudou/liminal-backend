@@ -34,7 +34,7 @@ def serialize_store_for_miniapp(store: StoreConfig) -> dict:
 
 def serialize_category_for_miniapp(category: Category) -> dict:
     return {
-        "id": category.id,
+        "id": str(category.id),
         "name": category.category_name,
         "desc": category.category_desc,
         "badge": category.badge_text,
@@ -43,7 +43,7 @@ def serialize_category_for_miniapp(category: Category) -> dict:
 
 def serialize_banner_for_miniapp(banner: Banner) -> dict:
     return {
-        "id": banner.id,
+        "id": str(banner.id),
         "title": banner.title,
         "subtitle": banner.subtitle,
         "actionText": banner.action_text,
@@ -54,9 +54,9 @@ def serialize_banner_for_miniapp(banner: Banner) -> dict:
 
 def serialize_goods_for_miniapp(goods: Goods, detail: bool = False) -> dict:
     payload = {
-        "id": goods.id,
+        "id": str(goods.id),
         "name": goods.goods_name,
-        "categoryId": goods.category_id,
+        "categoryId": str(goods.category_id),
         "coverText": goods.cover_text,
         "coverColor": goods.cover_color,
         "coverImage": goods.cover_image,
@@ -70,7 +70,7 @@ def serialize_goods_for_miniapp(goods: Goods, detail: bool = False) -> dict:
     if detail:
         payload["specs"] = [
             {
-                "specId": spec.id,
+                "specId": str(spec.id),
                 "specName": spec.spec_name,
                 "price": cents_to_yuan(spec.price_cents),
                 "stock": spec.stock,
@@ -109,12 +109,12 @@ def serialize_order_for_miniapp(order: Order) -> dict:
         "orderNo": order.order_no,
         "items": [
             {
-                "goodsId": item.goods_id,
+                "goodsId": str(item.goods_id),
                 "goodsName": item.goods_name,
                 "coverText": item.cover_text,
                 "coverColor": item.cover_color,
                 "coverImage": item.cover_image,
-                "specId": item.spec_id,
+                "specId": str(item.spec_id),
                 "specName": item.spec_name,
                 "price": cents_to_yuan(item.price_cents),
                 "quantity": item.quantity,

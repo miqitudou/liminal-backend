@@ -38,7 +38,16 @@ def get_current_admin(
             http_status=status.HTTP_401_UNAUTHORIZED,
         )
 
-    admin = db.get(AdminUser, payload.get("sub"))
+    try:
+        admin_id = int(payload.get("sub"))
+    except (TypeError, ValueError):
+        raise AppException(
+            code=40102,
+            message="登录已过期",
+            http_status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    admin = db.get(AdminUser, admin_id)
     if not admin:
         raise AppException(
             code=40102,
@@ -74,7 +83,16 @@ def get_current_user(
             http_status=status.HTTP_401_UNAUTHORIZED,
         )
 
-    user = db.get(User, payload.get("sub"))
+    try:
+        user_id = int(payload.get("sub"))
+    except (TypeError, ValueError):
+        raise AppException(
+            code=40102,
+            message="登录已过期",
+            http_status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    user = db.get(User, user_id)
     if not user:
         raise AppException(
             code=40102,

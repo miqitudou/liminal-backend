@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_admin
 from app.core.exceptions import AppException
+from app.core.id_utils import normalize_int_id
 from app.db.session import get_db
 from app.models import Banner
 from app.schemas.admin import BannerItem, BannerListData, BannerPayload
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/admin/banners", tags=["admin-banners"])
 
 def serialize_banner(banner: Banner) -> BannerItem:
     return BannerItem(
-        banner_id=banner.id,
+        banner_id=str(banner.id),
         title=banner.title,
         subtitle=banner.subtitle,
         image_url=banner.image_url,
@@ -59,7 +60,7 @@ def get_banner_detail(
     db: Session = Depends(get_db),
     _admin=Depends(get_current_admin),
 ) -> ApiResponse[BannerItem]:
-    banner = db.get(Banner, banner_id)
+    banner = db.get(Banner, normalize_int_id(banner_id, "Banner ID"))
     if not banner:
         raise AppException(code=40405, message="轮播图不存在")
     return ApiResponse.success(data=serialize_banner(banner))
@@ -83,7 +84,7 @@ def update_banner(
     db: Session = Depends(get_db),
     _admin=Depends(get_current_admin),
 ) -> ApiResponse[BannerItem]:
-    banner = db.get(Banner, banner_id)
+    banner = db.get(Banner, normalize_int_id(banner_id, "Banner ID"))
     if not banner:
         raise AppException(code=40405, message="轮播图不存在")
     banner = save_banner(db, payload, existing=banner)
@@ -97,7 +98,7 @@ def delete_banner(
     db: Session = Depends(get_db),
     _admin=Depends(get_current_admin),
 ) -> ApiResponse[dict]:
-    banner = db.get(Banner, banner_id)
+    banner = db.get(Banner, normalize_int_id(banner_id, "Banner ID"))
     if not banner:
         raise AppException(code=40405, message="轮播图不存在")
     db.delete(banner)

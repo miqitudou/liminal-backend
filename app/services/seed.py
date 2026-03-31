@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.constants import DEFAULT_STORE_ID
 from app.core.security import hash_password
 from app.models import (
     AdminUser,
@@ -29,7 +27,6 @@ def seed_admin_user(db: Session) -> None:
 
     db.add(
         AdminUser(
-            id="admin_root",
             username=settings.default_admin_username,
             password_hash=hash_password(settings.default_admin_password),
             display_name=settings.default_admin_display_name,
@@ -39,106 +36,118 @@ def seed_admin_user(db: Session) -> None:
 
 
 def seed_demo_content(db: Session) -> None:
-    store = db.get(StoreConfig, DEFAULT_STORE_ID)
+    store = db.scalar(select(StoreConfig).limit(1))
     if not store:
-        db.add(
-            StoreConfig(
-                id=DEFAULT_STORE_ID,
-                store_name="Liminal",
-                short_name="里米",
-                phone="400-820-1314",
-                business_hours="09:00-20:00",
-                address="四川天府新区",
-                pickup_notice="蛋糕类建议至少提前 4 小时预约，节日款请尽量提前 1 天预定。",
-            )
+        store = StoreConfig(
+            store_name="Liminal",
+            short_name="里米",
+            phone="400-820-1314",
+            business_hours="09:00-20:00",
+            address="四川天府新区",
+            pickup_notice="蛋糕类建议至少提前 4 小时预约，节日款请尽量提前 1 天预定。",
         )
+        db.add(store)
+        db.flush()
 
     if db.scalar(select(Category.id).limit(1)):
         return
 
-    db.add_all(
-        [
-            Category(
-                id="cake",
-                category_name="奶油蛋糕",
-                category_desc="适合生日庆祝与朋友聚会",
-                badge_text="人气",
-                delivery_mode="local",
-                sort=1,
-                status="enabled",
-            ),
-            Category(
-                id="bread",
-                category_name="欧包吐司",
-                category_desc="适合早餐与常温快递",
-                badge_text="新鲜",
-                delivery_mode="express",
-                sort=2,
-                status="enabled",
-            ),
-            Category(
-                id="dessert",
-                category_name="甜点下午茶",
-                category_desc="适合门店自提和下午茶分享",
-                badge_text="推荐",
-                delivery_mode="local",
-                sort=3,
-                status="enabled",
-            ),
-            Category(
-                id="gift",
-                category_name="分享礼盒",
-                category_desc="适合送礼与办公室分享",
-                badge_text="限定",
-                delivery_mode="express",
-                sort=4,
-                status="enabled",
-            ),
-        ]
-    )
+    category_seed = [
+        {
+            "key": "cake",
+            "category_name": "奶油蛋糕",
+            "category_desc": "适合生日庆祝与朋友聚会",
+            "badge_text": "人气",
+            "delivery_mode": "local",
+            "sort": 1,
+        },
+        {
+            "key": "bread",
+            "category_name": "欧包吐司",
+            "category_desc": "适合早餐与常温快递",
+            "badge_text": "新鲜",
+            "delivery_mode": "express",
+            "sort": 2,
+        },
+        {
+            "key": "dessert",
+            "category_name": "甜点下午茶",
+            "category_desc": "适合门店自提和下午茶分享",
+            "badge_text": "推荐",
+            "delivery_mode": "local",
+            "sort": 3,
+        },
+        {
+            "key": "gift",
+            "category_name": "分享礼盒",
+            "category_desc": "适合送礼与办公室分享",
+            "badge_text": "限定",
+            "delivery_mode": "express",
+            "sort": 4,
+        },
+    ]
 
-    db.add_all(
-        [
+    categories_by_key: dict[str, Category] = {}
+    for item in category_seed:
+        category = Category(
+            category_name=item["category_name"],
+            category_desc=item["category_desc"],
+            badge_text=item["badge_text"],
+            delivery_mode=item["delivery_mode"],
+            sort=item["sort"],
+            status="enabled",
+        )
+        db.add(category)
+        db.flush()
+        categories_by_key[item["key"]] = category
+
+    banner_seed = [
+        {
+            "title": "春日草莓蛋糕",
+            "subtitle": "轻奶油搭配鲜果夹层，适合同城预约配送",
+            "image_url": "https://images.pexels.com/photos/30177790/pexels-photo-30177790.jpeg?auto=compress&cs=tinysrgb&w=1400",
+            "action_type": "category",
+            "action_value": str(categories_by_key["cake"].id),
+            "action_text": "查看蛋糕",
+            "sort": 1,
+        },
+        {
+            "title": "晨光现烤面包",
+            "subtitle": "吐司与餐包陆续出炉，适合早餐囤货",
+            "image_url": "https://images.pexels.com/photos/8508106/pexels-photo-8508106.jpeg?auto=compress&cs=tinysrgb&w=1400",
+            "action_type": "category",
+            "action_value": str(categories_by_key["bread"].id),
+            "action_text": "进入面包区",
+            "sort": 2,
+        },
+        {
+            "title": "下午茶分享礼盒",
+            "subtitle": "曲奇与常温烘焙组合，适合快递分享",
+            "image_url": "https://images.pexels.com/photos/32414204/pexels-photo-32414204.jpeg?auto=compress&cs=tinysrgb&w=1400",
+            "action_type": "category",
+            "action_value": str(categories_by_key["gift"].id),
+            "action_text": "查看礼盒",
+            "sort": 3,
+        },
+    ]
+
+    for item in banner_seed:
+        db.add(
             Banner(
-                id="b1",
-                title="春日草莓蛋糕",
-                subtitle="轻奶油搭配鲜果夹层，适合同城预约配送",
-                image_url="https://images.pexels.com/photos/30177790/pexels-photo-30177790.jpeg?auto=compress&cs=tinysrgb&w=1400",
-                action_type="category",
-                action_value="cake",
-                action_text="查看蛋糕",
-                sort=1,
+                title=item["title"],
+                subtitle=item["subtitle"],
+                image_url=item["image_url"],
+                action_type=item["action_type"],
+                action_value=item["action_value"],
+                action_text=item["action_text"],
+                sort=item["sort"],
                 status="enabled",
-            ),
-            Banner(
-                id="b2",
-                title="晨光现烤面包",
-                subtitle="吐司与餐包陆续出炉，适合早餐囤货",
-                image_url="https://images.pexels.com/photos/8508106/pexels-photo-8508106.jpeg?auto=compress&cs=tinysrgb&w=1400",
-                action_type="category",
-                action_value="bread",
-                action_text="进入面包区",
-                sort=2,
-                status="enabled",
-            ),
-            Banner(
-                id="b3",
-                title="下午茶分享礼盒",
-                subtitle="曲奇与常温烘焙组合，适合快递分享",
-                image_url="https://images.pexels.com/photos/32414204/pexels-photo-32414204.jpeg?auto=compress&cs=tinysrgb&w=1400",
-                action_type="category",
-                action_value="gift",
-                action_text="查看礼盒",
-                sort=3,
-                status="enabled",
-            ),
-        ]
-    )
+            )
+        )
 
     goods_seed = [
         {
-            "id": "g1001",
-            "category_id": "cake",
+            "category_key": "cake",
             "goods_name": "云朵草莓盒子",
             "goods_desc": "新鲜草莓搭配轻奶油和松软蛋糕胚，适合当天分享。",
             "cover_text": "草莓盒子",
@@ -150,15 +159,14 @@ def seed_demo_content(db: Session) -> None:
             "tags": ["招牌", "草莓季"],
             "detail_tips": ["建议冷藏保存口感更好", "请在当天食用", "支持附赠祝福卡"],
             "specs": [
-                ("g1001-s1", "单人分享装", 5800, 30, 4, 1),
-                ("g1001-s2", "双人分享装", 8800, 18, 4, 2),
+                ("单人分享装", 5800, 30, 4, 1),
+                ("双人分享装", 8800, 18, 4, 2),
             ],
             "pickup_slots": ["10:00-12:00", "13:00-15:00", "16:00-18:00"],
             "min_advance_hours": 4,
         },
         {
-            "id": "g1002",
-            "category_id": "bread",
+            "category_key": "bread",
             "goods_name": "海盐奶香卷",
             "goods_desc": "奶香柔和，带一点海盐回甘，适合早餐和下午茶。",
             "cover_text": "奶香卷",
@@ -167,18 +175,17 @@ def seed_demo_content(db: Session) -> None:
             "price_cents": 2200,
             "sales_count": 412,
             "is_recommend": True,
-            "tags": ["热卖", "早餐"],
+            "tags": ["热销", "早餐"],
             "detail_tips": ["常温保存 1 天", "复烤后更香", "适合搭配咖啡"],
             "specs": [
-                ("g1002-s1", "2 只装", 2200, 50, 2, 1),
-                ("g1002-s2", "4 只装", 3900, 30, 2, 2),
+                ("2 只装", 2200, 50, 2, 1),
+                ("4 只装", 3900, 30, 2, 2),
             ],
             "pickup_slots": ["09:00-11:00", "11:00-13:00", "15:00-17:00"],
             "min_advance_hours": 2,
         },
         {
-            "id": "g1003",
-            "category_id": "dessert",
+            "category_key": "dessert",
             "goods_name": "伯爵红茶司康",
             "goods_desc": "茶香细腻，外酥内软，适合搭配果酱和奶油。",
             "cover_text": "红茶司康",
@@ -190,15 +197,14 @@ def seed_demo_content(db: Session) -> None:
             "tags": ["下午茶"],
             "detail_tips": ["建议搭配红茶", "现烤出炉更香", "适合朋友分享"],
             "specs": [
-                ("g1003-s1", "2 枚装", 1800, 40, 2, 1),
-                ("g1003-s2", "6 枚装", 4900, 16, 4, 2),
+                ("2 枚装", 1800, 40, 2, 1),
+                ("6 枚装", 4900, 16, 4, 2),
             ],
             "pickup_slots": ["10:00-12:00", "13:00-15:00", "17:00-19:00"],
             "min_advance_hours": 2,
         },
         {
-            "id": "g1004",
-            "category_id": "dessert",
+            "category_key": "dessert",
             "goods_name": "焦糖坚果挞",
             "goods_desc": "焦糖香气浓郁，层次丰富，香甜但不腻口。",
             "cover_text": "坚果挞",
@@ -210,15 +216,14 @@ def seed_demo_content(db: Session) -> None:
             "tags": ["招牌"],
             "detail_tips": ["坚果过敏人群慎选", "常温保存 2 天", "适合搭配美式咖啡"],
             "specs": [
-                ("g1004-s1", "单枚", 3600, 25, 4, 1),
-                ("g1004-s2", "双枚礼盒", 6800, 12, 6, 2),
+                ("单枚", 3600, 25, 4, 1),
+                ("双枚礼盒", 6800, 12, 6, 2),
             ],
             "pickup_slots": ["11:00-13:00", "14:00-16:00", "17:00-19:00"],
             "min_advance_hours": 4,
         },
         {
-            "id": "g1005",
-            "category_id": "bread",
+            "category_key": "bread",
             "goods_name": "原味手撕吐司",
             "goods_desc": "低糖松软，奶香自然，适合家庭早餐分享。",
             "cover_text": "手撕吐司",
@@ -230,15 +235,14 @@ def seed_demo_content(db: Session) -> None:
             "tags": ["早餐", "回购高"],
             "detail_tips": ["可切片", "适合复烤", "建议 2 天内食用"],
             "specs": [
-                ("g1005-s1", "标准条装", 2400, 36, 2, 1),
-                ("g1005-s2", "双条分享装", 4600, 20, 4, 2),
+                ("标准条装", 2400, 36, 2, 1),
+                ("双条分享装", 4600, 20, 4, 2),
             ],
             "pickup_slots": ["09:00-11:00", "12:00-14:00", "16:00-18:00"],
             "min_advance_hours": 2,
         },
         {
-            "id": "g1006",
-            "category_id": "cake",
+            "category_key": "cake",
             "goods_name": "香草缎带蛋糕",
             "goods_desc": "奶油纹理细腻，适合生日、纪念日和小型聚会。",
             "cover_text": "缎带蛋糕",
@@ -250,15 +254,14 @@ def seed_demo_content(db: Session) -> None:
             "tags": ["庆生", "可写字"],
             "detail_tips": ["支持写字留言", "建议冷藏保存", "请提前预约"],
             "specs": [
-                ("g1006-s1", "4 寸", 16800, 12, 6, 1),
-                ("g1006-s2", "6 寸", 23800, 8, 6, 2),
+                ("4 寸", 16800, 12, 6, 1),
+                ("6 寸", 23800, 8, 6, 2),
             ],
             "pickup_slots": ["10:00-12:00", "14:00-16:00", "18:00-20:00"],
             "min_advance_hours": 6,
         },
         {
-            "id": "g1007",
-            "category_id": "gift",
+            "category_key": "gift",
             "goods_name": "手作曲奇礼盒",
             "goods_desc": "黄油香气浓郁，多口味组合，适合送礼和多人分享。",
             "cover_text": "曲奇礼盒",
@@ -270,15 +273,14 @@ def seed_demo_content(db: Session) -> None:
             "tags": ["礼盒", "送礼"],
             "detail_tips": ["含原味与可可口味", "礼盒附赠手提袋", "常温保存 3 天"],
             "specs": [
-                ("g1007-s1", "12 枚礼盒", 9600, 15, 6, 1),
-                ("g1007-s2", "24 枚礼盒", 16800, 10, 12, 2),
+                ("12 枚礼盒", 9600, 15, 6, 1),
+                ("24 枚礼盒", 16800, 10, 12, 2),
             ],
             "pickup_slots": ["10:00-12:00", "13:00-15:00", "16:00-18:00"],
             "min_advance_hours": 6,
         },
         {
-            "id": "g1008",
-            "category_id": "dessert",
+            "category_key": "dessert",
             "goods_name": "柠檬磅蛋糕",
             "goods_desc": "酸甜清新，组织紧实，适合春夏下午茶。",
             "cover_text": "磅蛋糕",
@@ -290,8 +292,8 @@ def seed_demo_content(db: Session) -> None:
             "tags": ["清新"],
             "detail_tips": ["冷藏口感更扎实", "适合下午茶", "礼盒装适合分享"],
             "specs": [
-                ("g1008-s1", "单条装", 4200, 22, 4, 1),
-                ("g1008-s2", "双条礼盒", 7800, 10, 6, 2),
+                ("单条装", 4200, 22, 4, 1),
+                ("双条礼盒", 7800, 10, 6, 2),
             ],
             "pickup_slots": ["10:00-12:00", "14:00-16:00", "17:00-19:00"],
             "min_advance_hours": 4,
@@ -299,36 +301,35 @@ def seed_demo_content(db: Session) -> None:
     ]
 
     for index, item in enumerate(goods_seed, start=1):
-        db.add(
-            Goods(
-                id=item["id"],
-                category_id=item["category_id"],
-                goods_name=item["goods_name"],
-                goods_desc=item["goods_desc"],
-                cover_text=item["cover_text"],
-                cover_color=item["cover_color"],
-                cover_image=item["cover_image"],
-                price_cents=item["price_cents"],
-                sales_count=item["sales_count"],
-                status="on",
-                is_recommend=item["is_recommend"],
-                sort=index,
-                tags=item["tags"],
-                detail_tips=item["detail_tips"],
-            )
+        goods = Goods(
+            category_id=categories_by_key[item["category_key"]].id,
+            goods_name=item["goods_name"],
+            goods_desc=item["goods_desc"],
+            cover_text=item["cover_text"],
+            cover_color=item["cover_color"],
+            cover_image=item["cover_image"],
+            price_cents=item["price_cents"],
+            sales_count=item["sales_count"],
+            status="on",
+            is_recommend=item["is_recommend"],
+            sort=index,
+            tags=item["tags"],
+            detail_tips=item["detail_tips"],
         )
+        db.add(goods)
+        db.flush()
+
         db.add(
             GoodsBookingRule(
-                goods_id=item["id"],
+                goods_id=goods.id,
                 min_advance_hours=item["min_advance_hours"],
                 pickup_slots=item["pickup_slots"],
             )
         )
-        for spec_id, spec_name, price_cents, stock, min_hours, spec_sort in item["specs"]:
+        for spec_name, price_cents, stock, min_hours, spec_sort in item["specs"]:
             db.add(
                 GoodsSpec(
-                    id=spec_id,
-                    goods_id=item["id"],
+                    goods_id=goods.id,
                     spec_name=spec_name,
                     price_cents=price_cents,
                     stock=stock,
@@ -337,10 +338,6 @@ def seed_demo_content(db: Session) -> None:
                     status="enabled",
                 )
             )
-
-
-def generate_id(prefix: str) -> str:
-    return f"{prefix}_{uuid4().hex[:8]}"
 
 
 def generate_member_since() -> str:
