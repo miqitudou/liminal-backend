@@ -7,6 +7,7 @@ from app.api.routes import (
     admin_goods,
     admin_orders,
     admin_points,
+    admin_store,
     admin_uploads,
     health,
     miniapp_auth,
@@ -25,6 +26,7 @@ api_router.include_router(admin_goods.router)
 api_router.include_router(admin_banners.router)
 api_router.include_router(admin_orders.router)
 api_router.include_router(admin_points.router)
+api_router.include_router(admin_store.router)
 api_router.include_router(admin_uploads.router)
 api_router.include_router(miniapp_auth.router)
 api_router.include_router(miniapp_content.router)

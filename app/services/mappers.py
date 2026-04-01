@@ -39,6 +39,23 @@ def serialize_store_for_miniapp(store: StoreConfig) -> dict:
         "businessHours": store.business_hours,
         "address": store.address,
         "pickupNotice": store.pickup_notice,
+        "socialQrs": [
+            {
+                "title": "小红书",
+                "note": "看上新与日常",
+                "imageUrl": store.xiaohongshu_qr_url,
+            },
+            {
+                "title": "微信号",
+                "note": "加好友咨询下单",
+                "imageUrl": store.wechat_qr_url,
+            },
+            {
+                "title": "抖音",
+                "note": "看制作与开箱",
+                "imageUrl": store.douyin_qr_url,
+            },
+        ],
     }
 
 

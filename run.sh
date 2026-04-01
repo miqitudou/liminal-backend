@@ -28,6 +28,10 @@ fi
 mkdir -p "$LOG_DIR"
 
 cd "$PROJECT_DIR"
+
+echo "开始拉取最新代码..."
+git pull
+
 nohup "$VENV_PYTHON" -m uvicorn app.main:app --host "$HOST" --port "$PORT" >> "$LOG_FILE" 2>&1 &
 PID=$!
 echo "$PID" > "$PID_FILE"

@@ -241,6 +241,33 @@ class UploadData(BaseModel):
     file_key: str
 
 
+class StoreConfigPayload(BaseModel):
+    store_name: str
+    short_name: str
+    phone: str
+    business_hours: str
+    address: str
+    pickup_notice: str = ""
+    xiaohongshu_qr_url: str = ""
+    wechat_qr_url: str = ""
+    douyin_qr_url: str = ""
+
+
+class StoreConfigItem(BaseModel):
+    id: str
+    store_name: str
+    short_name: str
+    phone: str
+    business_hours: str
+    address: str
+    pickup_notice: str
+    xiaohongshu_qr_url: str
+    wechat_qr_url: str
+    douyin_qr_url: str
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
 class PointsProductPayload(BaseModel):
     title: str
     subtitle: str = ""

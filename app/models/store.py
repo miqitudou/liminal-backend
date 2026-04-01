@@ -16,6 +16,11 @@ class StoreConfig(Base):
     business_hours: Mapped[str] = mapped_column(String(64), nullable=False)
     address: Mapped[str] = mapped_column(String(255), nullable=False)
     pickup_notice: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    xiaohongshu_qr_url: Mapped[str] = mapped_column(
+        String(500), default="", nullable=False
+    )
+    wechat_qr_url: Mapped[str] = mapped_column(String(500), default="", nullable=False)
+    douyin_qr_url: Mapped[str] = mapped_column(String(500), default="", nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now(),

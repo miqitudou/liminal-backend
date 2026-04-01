@@ -48,6 +48,9 @@ def seed_store_config(db: Session) -> StoreConfig:
         business_hours="09:00-20:00",
         address="四川天府新区",
         pickup_notice="蛋糕类建议至少提前 4 小时预约，节日款请尽量提前 1 天预定。",
+        xiaohongshu_qr_url="",
+        wechat_qr_url="",
+        douyin_qr_url="",
     )
     db.add(store)
     db.flush()
