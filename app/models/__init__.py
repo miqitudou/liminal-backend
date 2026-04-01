@@ -3,6 +3,7 @@ from app.models.banner import Banner
 from app.models.category import Category
 from app.models.goods import Goods, GoodsBookingRule, GoodsSpec
 from app.models.order import Order, OrderItem
+from app.models.points import PointsProduct, PointsRedemption, PointsTransaction
 from app.models.store import StoreConfig
 from app.models.user import User
 
@@ -15,6 +16,9 @@ __all__ = [
     "GoodsSpec",
     "Order",
     "OrderItem",
+    "PointsProduct",
+    "PointsRedemption",
+    "PointsTransaction",
     "StoreConfig",
     "User",
 ]

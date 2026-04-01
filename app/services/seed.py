@@ -14,6 +14,7 @@ from app.models import (
     Goods,
     GoodsBookingRule,
     GoodsSpec,
+    PointsProduct,
     StoreConfig,
 )
 
@@ -35,20 +36,25 @@ def seed_admin_user(db: Session) -> None:
     )
 
 
-def seed_demo_content(db: Session) -> None:
+def seed_store_config(db: Session) -> StoreConfig:
     store = db.scalar(select(StoreConfig).limit(1))
-    if not store:
-        store = StoreConfig(
-            store_name="Liminal",
-            short_name="里米",
-            phone="400-820-1314",
-            business_hours="09:00-20:00",
-            address="四川天府新区",
-            pickup_notice="蛋糕类建议至少提前 4 小时预约，节日款请尽量提前 1 天预定。",
-        )
-        db.add(store)
-        db.flush()
+    if store:
+        return store
 
+    store = StoreConfig(
+        store_name="Liminal",
+        short_name="里米",
+        phone="400-820-1314",
+        business_hours="09:00-20:00",
+        address="四川天府新区",
+        pickup_notice="蛋糕类建议至少提前 4 小时预约，节日款请尽量提前 1 天预定。",
+    )
+    db.add(store)
+    db.flush()
+    return store
+
+
+def seed_catalog_content(db: Session) -> None:
     if db.scalar(select(Category.id).limit(1)):
         return
 
@@ -326,6 +332,7 @@ def seed_demo_content(db: Session) -> None:
                 pickup_slots=item["pickup_slots"],
             )
         )
+
         for spec_name, price_cents, stock, min_hours, spec_sort in item["specs"]:
             db.add(
                 GoodsSpec(
@@ -338,6 +345,61 @@ def seed_demo_content(db: Session) -> None:
                     status="enabled",
                 )
             )
+
+
+def seed_points_products(db: Session) -> None:
+    if db.scalar(select(PointsProduct.id).limit(1)):
+        return
+
+    points_products = [
+        {
+            "title": "曲奇礼盒兑换券",
+            "subtitle": "热门兑换",
+            "description": "兑换后可到店领取 1 份限定手作曲奇礼盒，适合送礼或办公室分享。",
+            "image_url": "https://images.pexels.com/photos/32414204/pexels-photo-32414204.jpeg?auto=compress&cs=tinysrgb&w=1200",
+            "points_cost": 980,
+            "stock": 32,
+            "sort": 1,
+        },
+        {
+            "title": "饮品双杯券",
+            "subtitle": "下午茶",
+            "description": "可兑换本周限定饮品 2 杯，适合和朋友一起到店小坐。",
+            "image_url": "https://images.pexels.com/photos/302903/pexels-photo-302903.jpeg?auto=compress&cs=tinysrgb&w=1200",
+            "points_cost": 520,
+            "stock": 48,
+            "sort": 2,
+        },
+        {
+            "title": "节日贺卡套组",
+            "subtitle": "限定周边",
+            "description": "包含 3 款烘焙主题贺卡，适合搭配蛋糕或礼盒一起送出。",
+            "image_url": "https://images.pexels.com/photos/6270/morning-breakfast-croissant-lamp.jpg?auto=compress&cs=tinysrgb&w=1200",
+            "points_cost": 360,
+            "stock": 80,
+            "sort": 3,
+        },
+    ]
+
+    for item in points_products:
+        db.add(
+            PointsProduct(
+                title=item["title"],
+                subtitle=item["subtitle"],
+                description=item["description"],
+                image_url=item["image_url"],
+                points_cost=item["points_cost"],
+                stock=item["stock"],
+                sort=item["sort"],
+                status="enabled",
+            )
+        )
+
+
+def seed_demo_content(db: Session) -> None:
+    seed_catalog_content(db)
+    seed_store_config(db)
+    seed_points_products(db)
 
 
 def generate_member_since() -> str:

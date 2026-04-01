@@ -3,7 +3,17 @@ from __future__ import annotations
 from math import ceil
 
 from app.core.constants import ORDER_STATUS_PENDING_PAYMENT, ORDER_STATUS_TEXT_MAP
-from app.models import Banner, Category, Goods, Order, StoreConfig, User
+from app.models import (
+    Banner,
+    Category,
+    Goods,
+    Order,
+    PointsProduct,
+    PointsRedemption,
+    PointsTransaction,
+    StoreConfig,
+    User,
+)
 
 
 def cents_to_yuan(cents: int) -> int | float:
@@ -98,6 +108,7 @@ def serialize_user_for_miniapp(user: User) -> dict:
         "mobile": user.mobile,
         "memberSince": user.member_since,
         "levelText": user.level_text,
+        "pointsBalance": user.points_balance,
         "wechatBound": user.wechat_bound,
         "phoneBound": user.phone_bound,
         "profileCompleted": user.profile_completed,
@@ -131,12 +142,51 @@ def serialize_order_for_miniapp(order: Order) -> dict:
         "bookingDate": order.booking_date,
         "pickupSlot": order.pickup_slot,
         "remark": order.remark,
-        "createdAt": order.created_at.strftime("%Y-%m-%d %H:%M")
-        if order.created_at
-        else "",
+        "createdAt": order.created_at.strftime("%Y-%m-%d %H:%M") if order.created_at else "",
         "pickupStoreName": order.pickup_store_name,
         "pickupStoreAddress": order.pickup_store_address,
         "pickupStorePhone": order.pickup_store_phone,
         "canPay": order.status == ORDER_STATUS_PENDING_PAYMENT,
         "canCancel": order.status == ORDER_STATUS_PENDING_PAYMENT,
+    }
+
+
+def serialize_points_product_for_miniapp(product: PointsProduct) -> dict:
+    return {
+        "id": str(product.id),
+        "title": product.title,
+        "subtitle": product.subtitle,
+        "desc": product.description,
+        "imageUrl": product.image_url,
+        "points": product.points_cost,
+        "stock": product.stock,
+        "tag": product.subtitle or "积分兑换",
+        "status": product.status,
+    }
+
+
+def serialize_points_redemption_for_miniapp(redemption: PointsRedemption) -> dict:
+    return {
+        "id": str(redemption.id),
+        "productId": str(redemption.product_id),
+        "title": redemption.product_snapshot_title,
+        "imageUrl": redemption.product_snapshot_image,
+        "points": redemption.points_cost,
+        "status": redemption.status,
+        "createdAt": redemption.created_at.strftime("%Y-%m-%d %H:%M")
+        if redemption.created_at
+        else "",
+    }
+
+
+def serialize_points_transaction_for_miniapp(transaction: PointsTransaction) -> dict:
+    return {
+        "id": str(transaction.id),
+        "changePoints": transaction.change_points,
+        "balanceAfter": transaction.balance_after,
+        "transactionType": transaction.transaction_type,
+        "remark": transaction.remark,
+        "createdAt": transaction.created_at.strftime("%Y-%m-%d %H:%M")
+        if transaction.created_at
+        else "",
     }

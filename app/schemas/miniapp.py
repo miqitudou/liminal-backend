@@ -69,3 +69,19 @@ class MiniappUserMeData(BaseModel):
 
 class MiniappGoodsListData(BaseModel):
     list: list[dict]
+
+
+class MiniappPointsMallData(BaseModel):
+    pointsBalance: int
+    tips: list[str]
+    goods: list[dict]
+    records: list[dict]
+
+
+class MiniappPointsRedeemRequest(BaseModel):
+    productId: str | int
+
+
+class MiniappPointsRedeemResponse(BaseModel):
+    redemptionId: str
+    pointsBalance: int

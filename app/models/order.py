@@ -29,6 +29,7 @@ class Order(Base):
         default="pending",
         nullable=False,
     )
+    points_rewarded: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     amount_cents: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     contact_name: Mapped[str] = mapped_column(String(64), nullable=False)
     mobile: Mapped[str] = mapped_column(String(32), nullable=False)

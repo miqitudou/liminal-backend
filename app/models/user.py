@@ -15,6 +15,7 @@ class User(Base):
     mobile: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
     member_since: Mapped[str] = mapped_column(String(32), nullable=False)
     level_text: Mapped[str] = mapped_column(String(64), default="烘焙常客", nullable=False)
+    points_balance: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     wechat_bound: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     phone_bound: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     profile_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
@@ -32,3 +33,15 @@ class User(Base):
     )
 
     orders = relationship("Order", back_populates="user")
+    point_transactions = relationship(
+        "PointsTransaction",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        order_by="PointsTransaction.created_at.desc()",
+    )
+    point_redemptions = relationship(
+        "PointsRedemption",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        order_by="PointsRedemption.created_at.desc()",
+    )

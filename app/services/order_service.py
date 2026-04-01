@@ -15,6 +15,7 @@ from app.core.id_utils import normalize_int_id
 from app.models import Goods, Order, OrderItem, StoreConfig, User
 from app.schemas.miniapp import MiniappCreateOrderRequest
 from app.services.mappers import build_pagination
+from app.services.points_service import award_order_points
 
 
 def build_order_no() -> str:
@@ -25,7 +26,7 @@ def build_order_no() -> str:
 def get_order_or_404(db: Session, order_no: str) -> Order:
     order = db.scalar(
         select(Order)
-        .options(joinedload(Order.items))
+        .options(joinedload(Order.items), joinedload(Order.user))
         .where(Order.order_no == order_no)
     )
     if not order:
@@ -43,7 +44,7 @@ def list_admin_orders(
     page: int = 1,
     page_size: int = 20,
 ) -> tuple[list[Order], dict]:
-    stmt = select(Order).options(joinedload(Order.items))
+    stmt = select(Order).options(joinedload(Order.items), joinedload(Order.user))
     if order_no:
         stmt = stmt.where(Order.order_no.like(f"%{order_no}%"))
     if status:
@@ -66,10 +67,14 @@ def list_admin_orders(
 
 
 def update_order_status(db: Session, order: Order, status: str) -> Order:
+    previous_status = order.status
     order.status = status
-    order.payment_status = "paid" if status == ORDER_STATUS_PAID else order.payment_status
     if status == ORDER_STATUS_PAID:
-        order.paid_at = datetime.now()
+        order.payment_status = "paid"
+        if not order.paid_at:
+            order.paid_at = datetime.now()
+        if previous_status != ORDER_STATUS_PAID:
+            award_order_points(db, order)
     db.add(order)
     db.flush()
     return get_order_or_404(db, order.order_no)

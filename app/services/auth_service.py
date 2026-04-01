@@ -6,6 +6,7 @@ from app.core.exceptions import AppException
 from app.core.security import create_access_token, verify_password
 from app.models import AdminUser, User
 from app.services.mappers import serialize_user_for_miniapp
+from app.services.points_service import grant_welcome_bonus
 from app.services.seed import generate_member_since
 
 
@@ -52,6 +53,7 @@ def simple_user_login(
         )
         db.add(user)
         db.flush()
+        grant_welcome_bonus(db, user)
     else:
         if nickname:
             user.nickname = nickname

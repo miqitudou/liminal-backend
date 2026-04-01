@@ -239,3 +239,56 @@ class UploadData(BaseModel):
     file_name: str
     file_url: str
     file_key: str
+
+
+class PointsProductPayload(BaseModel):
+    title: str
+    subtitle: str = ""
+    description: str = ""
+    image_url: str = ""
+    points_cost: int
+    stock: int = 0
+    sort: int = 0
+    status: str = "enabled"
+
+
+class PointsProductItem(BaseModel):
+    id: str
+    title: str
+    subtitle: str
+    description: str
+    image_url: str
+    points_cost: int
+    stock: int
+    sort: int
+    status: str
+    redemption_count: int = 0
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class PointsProductListData(BaseModel):
+    list: list[PointsProductItem]
+    pagination: PaginationMeta
+
+
+class PointsRedemptionItem(BaseModel):
+    id: str
+    user_id: str
+    nickname: str
+    mobile: str
+    product_id: str
+    product_title: str
+    points_cost: int
+    status: str
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class PointsRedemptionListData(BaseModel):
+    list: list[PointsRedemptionItem]
+    pagination: PaginationMeta
+
+
+class PointsRedemptionStatusUpdateRequest(BaseModel):
+    status: str

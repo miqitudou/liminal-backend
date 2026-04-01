@@ -100,3 +100,21 @@ def get_current_user(
             http_status=status.HTTP_401_UNAUTHORIZED,
         )
     return user
+
+
+def get_optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> User | None:
+    if not credentials:
+        return None
+
+    try:
+        payload = decode_token(credentials.credentials)
+        if payload.get("token_type") != TOKEN_TYPE_USER:
+            return None
+        user_id = int(payload.get("sub"))
+    except (ValueError, TypeError):
+        return None
+
+    return db.get(User, user_id)
