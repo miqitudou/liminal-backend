@@ -79,7 +79,24 @@ def serialize_banner_for_miniapp(banner: Banner) -> dict:
     }
 
 
+def get_enabled_goods_specs(goods: Goods) -> list:
+    return [spec for spec in goods.specs if spec.status == "enabled"] if goods.specs else []
+
+
+def get_goods_price_range_cents(goods: Goods) -> tuple[int, int]:
+    enabled_specs = get_enabled_goods_specs(goods)
+
+    if enabled_specs:
+        prices = [spec.price_cents for spec in enabled_specs]
+        return min(prices), max(prices)
+
+    return goods.price_cents, goods.price_cents
+
+
 def serialize_goods_for_miniapp(goods: Goods, detail: bool = False) -> dict:
+    enabled_specs = get_enabled_goods_specs(goods)
+    price_min_cents, price_max_cents = get_goods_price_range_cents(goods)
+
     payload = {
         "id": str(goods.id),
         "name": goods.goods_name,
@@ -87,12 +104,15 @@ def serialize_goods_for_miniapp(goods: Goods, detail: bool = False) -> dict:
         "coverText": goods.cover_text,
         "coverColor": goods.cover_color,
         "coverImage": goods.cover_image,
-        "price": cents_to_yuan(goods.price_cents),
+        "price": cents_to_yuan(price_min_cents),
+        "priceMin": cents_to_yuan(price_min_cents),
+        "priceMax": cents_to_yuan(price_max_cents),
         "desc": goods.goods_desc,
         "sales": goods.sales_count,
         "status": goods.status,
         "isRecommend": goods.is_recommend,
         "tags": goods.tags or [],
+        "specCount": len(enabled_specs),
     }
     if detail:
         payload["specs"] = [
@@ -103,8 +123,7 @@ def serialize_goods_for_miniapp(goods: Goods, detail: bool = False) -> dict:
                 "stock": spec.stock,
                 "minAdvanceHours": spec.min_advance_hours,
             }
-            for spec in goods.specs
-            if spec.status == "enabled"
+            for spec in enabled_specs
         ]
         payload["bookingRules"] = {
             "minAdvanceHours": goods.booking_rule.min_advance_hours

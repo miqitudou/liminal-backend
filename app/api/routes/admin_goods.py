@@ -14,12 +14,15 @@ from app.schemas.admin import (
 )
 from app.schemas.common import ApiResponse
 from app.services.catalog_service import get_goods_or_404, list_goods, save_goods
+from app.services.mappers import get_goods_price_range_cents
 
 
 router = APIRouter(prefix="/admin/goods", tags=["admin-goods"])
 
 
 def serialize_goods_detail(goods: Goods) -> GoodsItem:
+    price_min_cents, price_max_cents = get_goods_price_range_cents(goods)
+
     return GoodsItem(
         goods_id=str(goods.id),
         category_id=str(goods.category_id),
@@ -30,6 +33,8 @@ def serialize_goods_detail(goods: Goods) -> GoodsItem:
         cover_color=goods.cover_color,
         cover_image=goods.cover_image,
         price_cents=goods.price_cents,
+        price_min_cents=price_min_cents,
+        price_max_cents=price_max_cents,
         sales_count=goods.sales_count,
         status=goods.status,
         is_recommend=goods.is_recommend,
@@ -89,6 +94,8 @@ def get_goods_list(
             goods_name=item.goods_name,
             cover_image=item.cover_image,
             price_cents=item.price_cents,
+            price_min_cents=get_goods_price_range_cents(item)[0],
+            price_max_cents=get_goods_price_range_cents(item)[1],
             sales_count=item.sales_count,
             status=item.status,
             is_recommend=item.is_recommend,

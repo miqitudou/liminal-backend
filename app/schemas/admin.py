@@ -118,6 +118,8 @@ class GoodsItem(BaseModel):
     cover_color: str
     cover_image: str
     price_cents: int
+    price_min_cents: int = 0
+    price_max_cents: int = 0
     sales_count: int
     status: str
     is_recommend: bool
@@ -137,6 +139,8 @@ class GoodsListItem(BaseModel):
     goods_name: str
     cover_image: str
     price_cents: int
+    price_min_cents: int = 0
+    price_max_cents: int = 0
     sales_count: int
     status: str
     is_recommend: bool
