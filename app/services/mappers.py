@@ -100,6 +100,7 @@ def serialize_goods_for_miniapp(goods: Goods, detail: bool = False) -> dict:
     payload = {
         "id": str(goods.id),
         "name": goods.goods_name,
+        "featureText": goods.feature_text,
         "categoryId": str(goods.category_id),
         "coverText": goods.cover_text,
         "coverColor": goods.cover_color,

@@ -18,6 +18,7 @@ class Goods(Base):
     )
     goods_name: Mapped[str] = mapped_column(String(128), nullable=False)
     goods_desc: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    feature_text: Mapped[str] = mapped_column(String(128), default="", nullable=False)
     cover_text: Mapped[str] = mapped_column(String(128), default="", nullable=False)
     cover_color: Mapped[str] = mapped_column(String(32), default="#f3e1cf", nullable=False)
     cover_image: Mapped[str] = mapped_column(String(500), default="", nullable=False)

@@ -140,6 +140,7 @@ def save_goods(
     goods.category_id = category_id
     goods.goods_name = payload.goods_name
     goods.goods_desc = payload.goods_desc
+    goods.feature_text = payload.feature_text
     goods.cover_text = payload.cover_text
     goods.cover_color = payload.cover_color
     goods.cover_image = payload.cover_image

@@ -77,6 +77,7 @@ class GoodsPayload(BaseModel):
     category_id: str | int
     goods_name: str
     goods_desc: str = ""
+    feature_text: str = ""
     cover_text: str = ""
     cover_color: str = "#f3e1cf"
     cover_image: str = ""
@@ -114,6 +115,7 @@ class GoodsItem(BaseModel):
     category_name: str
     goods_name: str
     goods_desc: str
+    feature_text: str = ""
     cover_text: str
     cover_color: str
     cover_image: str
@@ -137,6 +139,7 @@ class GoodsListItem(BaseModel):
     category_id: str
     category_name: str
     goods_name: str
+    feature_text: str = ""
     cover_image: str
     price_cents: int
     price_min_cents: int = 0
